@@ -1,130 +1,140 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Crown, Shield, Zap, Users, TrendingUp, Coins } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Crown, Shield, Zap, TrendingUp, Users, QrCode } from "lucide-react";
 
 export default function Landing() {
-  const handleLogin = () => {
-    window.location.href = "/api/login";
-  };
-
   return (
-    <div className="min-h-screen bg-[#0F172A] text-slate-100">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 cosmic-gradient"></div>
-        <div className="relative z-10 px-6 py-16 mx-auto max-w-7xl">
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-8">
-              <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-purple-600 rounded-xl flex items-center justify-center neon-glow-amber animate-pulse-glow">
-                <Crown className="w-10 h-10 text-[#0F172A]" />
-              </div>
-            </div>
-            
-            <h1 className="text-6xl font-bold mb-6">
-              <span className="neon-text-amber">SOVR Empire</span>
-              <br />
-              <span className="text-slate-200">Wallet Command Center</span>
-            </h1>
-            
-            <p className="text-xl text-slate-400 mb-8 max-w-3xl mx-auto">
-              The ultimate DeFi command center with AI-powered wallet management, 
-              mass payments, QR scanning, and sovereign financial tools. 
-              Built for the future of decentralized finance.
-            </p>
-            
-            <Button 
-              onClick={handleLogin}
-              className="px-8 py-4 text-lg font-semibold bg-amber-500 hover:bg-amber-600 text-[#0F172A] neon-glow-amber animate-neon-pulse"
-            >
-              Enter the Empire
-            </Button>
-          </div>
-        </div>
+    <div className="min-h-screen bg-cosmic-black relative overflow-hidden">
+      {/* Background effects */}
+      <div className="absolute inset-0 cosmic-gradient opacity-20"></div>
+      <div className="absolute top-0 left-0 w-full h-full">
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-neon-purple/10 rounded-full blur-3xl animate-cosmic-float"></div>
+        <div className="absolute top-1/3 right-1/4 w-48 h-48 bg-neon-amber/10 rounded-full blur-3xl animate-cosmic-float" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-1/4 left-1/3 w-56 h-56 bg-neon-indigo/10 rounded-full blur-3xl animate-cosmic-float" style={{ animationDelay: '2s' }}></div>
       </div>
-
-      {/* Features Section */}
-      <div className="px-6 py-16 mx-auto max-w-7xl">
+      
+      <div className="relative z-10 container mx-auto px-4 py-16">
+        {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4">Sovereign Financial Tools</h2>
-          <p className="text-slate-400 text-lg">Everything you need to manage your crypto empire</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <Card className="bg-slate-800/50 border-slate-700 neon-glow-indigo hover:neon-glow-amber transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mb-4">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Multi-Wallet Management</h3>
-              <p className="text-slate-400">Create, import, and manage multiple wallets across different networks with enterprise-grade security.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800/50 border-slate-700 neon-glow-indigo hover:neon-glow-amber transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mb-4">
-                <Zap className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Mass Payments</h3>
-              <p className="text-slate-400">Process bulk payments efficiently with CSV upload support and real-time transaction tracking.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800/50 border-slate-700 neon-glow-indigo hover:neon-glow-amber transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center mb-4">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">AI Wallet Agents</h3>
-              <p className="text-slate-400">Deploy autonomous AI agents to manage trust operations, payments, and DeFi interactions.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800/50 border-slate-700 neon-glow-indigo hover:neon-glow-amber transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mb-4">
-                <TrendingUp className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Lending Gateway</h3>
-              <p className="text-slate-400">Access SOVR-ECHO trust pools and DeFi lending opportunities with competitive yields.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800/50 border-slate-700 neon-glow-indigo hover:neon-glow-amber transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg flex items-center justify-center mb-4">
-                <Coins className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Invoice & QR Payments</h3>
-              <p className="text-slate-400">Generate invoices with QR codes and scan payments directly through your camera.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800/50 border-slate-700 neon-glow-indigo hover:neon-glow-amber transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Trust Verification</h3>
-              <p className="text-slate-400">Verify PDF hashes, manage multisig wallets, and ensure cryptographic trust in all operations.</p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* CTA Section */}
-      <div className="px-6 py-16 mx-auto max-w-7xl">
-        <div className="text-center bg-gradient-to-r from-slate-800/50 to-slate-700/50 rounded-2xl p-12 neon-glow-purple">
-          <h2 className="text-3xl font-bold mb-4">Ready to Rule Your Financial Empire?</h2>
-          <p className="text-slate-400 mb-8 text-lg">
-            Join the SOVR Empire and take control of your decentralized finance operations
+          <div className="flex items-center justify-center space-x-3 mb-6">
+            <Crown className="w-12 h-12 text-neon-amber animate-glow-pulse" />
+            <h1 className="text-5xl font-orbitron font-bold text-neon-amber animate-neon-flicker">
+              SOVR Empire
+            </h1>
+          </div>
+          <p className="text-xl text-cosmic-light mb-2">
+            Sovereign Control of Your Digital Empire
           </p>
-          <Button 
-            onClick={handleLogin}
-            className="px-8 py-4 text-lg font-semibold bg-purple-600 hover:bg-purple-700 neon-glow-purple"
-          >
-            Start Your Reign
-          </Button>
+          <p className="text-cosmic-muted max-w-2xl mx-auto">
+            The ultimate DeFi command center with AI agents, mass payments, QR scanning, 
+            and sovereign financial tools. Built for the next generation of digital finance.
+          </p>
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+          <Card className="bg-cosmic-slate border-cosmic-gray neon-glow-amber hover:scale-105 transition-all duration-300">
+            <CardHeader>
+              <Shield className="w-10 h-10 text-neon-amber mb-2" />
+              <CardTitle className="text-neon-amber">Multi-Wallet Management</CardTitle>
+              <CardDescription className="text-cosmic-light">
+                Create, import, and manage multiple wallets across EVM networks with sovereign control.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="bg-cosmic-slate border-cosmic-gray neon-glow-indigo hover:scale-105 transition-all duration-300">
+            <CardHeader>
+              <Zap className="w-10 h-10 text-neon-indigo mb-2" />
+              <CardTitle className="text-neon-indigo">AI Wallet Agents</CardTitle>
+              <CardDescription className="text-cosmic-light">
+                Deploy autonomous AI agents for trading, lending, and DeFi operations with Grok integration.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="bg-cosmic-slate border-cosmic-gray neon-glow-purple hover:scale-105 transition-all duration-300">
+            <CardHeader>
+              <Users className="w-10 h-10 text-neon-purple mb-2" />
+              <CardTitle className="text-neon-purple">Mass Payments</CardTitle>
+              <CardDescription className="text-cosmic-light">
+                Process bulk payments via CSV upload with GasliteDrop integration and vault management.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="bg-cosmic-slate border-cosmic-gray neon-glow-green hover:scale-105 transition-all duration-300">
+            <CardHeader>
+              <QrCode className="w-10 h-10 text-neon-green mb-2" />
+              <CardTitle className="text-neon-green">QR Scanner & Invoices</CardTitle>
+              <CardDescription className="text-cosmic-light">
+                Generate invoices with QR codes and scan payments with camera integration.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="bg-cosmic-slate border-cosmic-gray neon-glow-amber hover:scale-105 transition-all duration-300">
+            <CardHeader>
+              <TrendingUp className="w-10 h-10 text-neon-amber mb-2" />
+              <CardTitle className="text-neon-amber">Lending Gateway</CardTitle>
+              <CardDescription className="text-cosmic-light">
+                Access SOVR-ECHO lending with trust scores and DeFi yield opportunities.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="bg-cosmic-slate border-cosmic-gray neon-glow-indigo hover:scale-105 transition-all duration-300">
+            <CardHeader>
+              <Shield className="w-10 h-10 text-neon-indigo mb-2" />
+              <CardTitle className="text-neon-indigo">Trust Verification</CardTitle>
+              <CardDescription className="text-cosmic-light">
+                Generate trust QR codes, sign PDFs, and verify documents with cryptographic proof.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+
+        {/* CTA Section */}
+        <div className="text-center">
+          <Card className="bg-cosmic-slate border-neon-amber neon-glow-amber max-w-2xl mx-auto">
+            <CardContent className="pt-8">
+              <Crown className="w-16 h-16 text-neon-amber mx-auto mb-4 animate-cosmic-float" />
+              <h2 className="text-3xl font-orbitron font-bold text-neon-amber mb-4">
+                Enter the Empire
+              </h2>
+              <p className="text-cosmic-light mb-6">
+                Join the sovereign revolution and take control of your digital assets 
+                with the most advanced DeFi command center ever built.
+              </p>
+              <Button 
+                size="lg" 
+                className="bg-neon-amber text-cosmic-black hover:bg-neon-amber/90 font-orbitron font-bold px-8 py-4 text-lg neon-glow-amber"
+                onClick={() => window.location.href = '/api/login'}
+              >
+                <Crown className="w-5 h-5 mr-2" />
+                Access Command Center
+              </Button>
+              <p className="text-sm text-cosmic-muted mt-4">
+                Secure authentication via Replit • No signup required
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+          <div className="text-center">
+            <div className="text-4xl font-orbitron font-bold text-neon-amber mb-2">17M+</div>
+            <div className="text-cosmic-light">SOVR Units</div>
+          </div>
+          <div className="text-center">
+            <div className="text-4xl font-orbitron font-bold text-neon-indigo mb-2">Multi-Chain</div>
+            <div className="text-cosmic-light">EVM Networks</div>
+          </div>
+          <div className="text-center">
+            <div className="text-4xl font-orbitron font-bold text-neon-purple mb-2">AI-Powered</div>
+            <div className="text-cosmic-light">Automation</div>
+          </div>
         </div>
       </div>
     </div>

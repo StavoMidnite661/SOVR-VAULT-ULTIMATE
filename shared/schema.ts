@@ -12,9 +12,9 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
-// Session storage table.
-// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
+// Session storage table (required for Replit Auth)
 export const sessions = pgTable(
   "sessions",
   {
@@ -25,8 +25,7 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table.
-// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
+// User storage table (required for Replit Auth)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(),
   email: varchar("email").unique(),
@@ -37,144 +36,128 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Wallets table
 export const wallets = pgTable("wallets", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
-  name: varchar("name").notNull(),
   address: varchar("address").notNull(),
-  network: varchar("network").notNull(),
-  type: varchar("type").notNull(), // 'created', 'imported', 'ai-agent'
+  name: varchar("name").notNull(),
+  type: varchar("type").notNull(), // main, ai_agent, vault
+  network: varchar("network").notNull(), // ethereum, base, etc.
   privateKey: text("private_key"), // encrypted
-  mnemonic: text("mnemonic"), // encrypted
-  balance: decimal("balance", { precision: 18, scale: 8 }).default("0"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Transactions table
 export const transactions = pgTable("transactions", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
   walletId: integer("wallet_id").references(() => wallets.id),
-  hash: varchar("hash").notNull(),
-  type: varchar("type").notNull(), // 'send', 'receive', 'mass_payment', 'invoice', 'ai_action'
-  amount: decimal("amount", { precision: 18, scale: 8 }).notNull(),
-  token: varchar("token").notNull(),
-  network: varchar("network").notNull(),
-  fromAddress: varchar("from_address"),
+  txHash: varchar("tx_hash"),
+  type: varchar("type").notNull(), // send, receive, mass_payment, ai_action
+  asset: varchar("asset").notNull(),
+  amount: decimal("amount", { precision: 20, scale: 8 }).notNull(),
   toAddress: varchar("to_address"),
-  status: varchar("status").notNull(), // 'pending', 'confirmed', 'failed'
-  metadata: jsonb("metadata"), // extra data like recipient count, invoice id, etc.
+  fromAddress: varchar("from_address"),
+  status: varchar("status").notNull(), // pending, complete, failed
+  gasUsed: decimal("gas_used", { precision: 20, scale: 8 }),
+  metadata: jsonb("metadata"), // additional data like CSV upload info
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Mass payments table
 export const massPayments = pgTable("mass_payments", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
-  walletId: integer("wallet_id").notNull().references(() => wallets.id),
-  name: varchar("name").notNull(),
-  totalAmount: decimal("total_amount", { precision: 18, scale: 8 }).notNull(),
-  recipientCount: integer("recipient_count").notNull(),
-  token: varchar("token").notNull(),
-  network: varchar("network").notNull(),
-  status: varchar("status").notNull(), // 'pending', 'processing', 'completed', 'failed'
-  csvData: jsonb("csv_data"), // array of recipient objects
-  transactionHashes: jsonb("transaction_hashes"), // array of tx hashes
+  batchId: varchar("batch_id").notNull(),
+  fileName: varchar("file_name"),
+  totalRecipients: integer("total_recipients").notNull(),
+  totalAmount: decimal("total_amount", { precision: 20, scale: 8 }).notNull(),
+  status: varchar("status").notNull(), // pending, processing, complete, failed
+  recipientsData: jsonb("recipients_data"), // parsed CSV data
   createdAt: timestamp("created_at").defaultNow(),
-  completedAt: timestamp("completed_at"),
 });
 
+// Invoices table
 export const invoices = pgTable("invoices", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
-  walletId: integer("wallet_id").notNull().references(() => wallets.id),
-  invoiceNumber: varchar("invoice_number").notNull().unique(),
-  amount: decimal("amount", { precision: 18, scale: 8 }).notNull(),
-  token: varchar("token").notNull(),
-  network: varchar("network").notNull(),
+  invoiceId: varchar("invoice_id").unique().notNull(),
+  amount: decimal("amount", { precision: 20, scale: 8 }).notNull(),
+  asset: varchar("asset").notNull(),
   description: text("description"),
-  clientName: varchar("client_name"),
-  clientEmail: varchar("client_email"),
-  status: varchar("status").notNull(), // 'pending', 'paid', 'expired', 'cancelled'
   qrCode: text("qr_code"), // QR code data
-  dueDate: timestamp("due_date"),
+  status: varchar("status").notNull(), // pending, paid, expired
   paidAt: timestamp("paid_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const lendingPools = pgTable("lending_pools", {
+// AI Agent actions table
+export const aiAgentActions = pgTable("ai_agent_actions", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
-  walletId: integer("wallet_id").notNull().references(() => wallets.id),
-  poolName: varchar("pool_name").notNull(),
-  amount: decimal("amount", { precision: 18, scale: 8 }).notNull(),
-  token: varchar("token").notNull(),
-  network: varchar("network").notNull(),
-  apy: decimal("apy", { precision: 5, scale: 2 }).notNull(),
-  type: varchar("type").notNull(), // 'sovr-echo', 'defi', 'trust-backed'
-  status: varchar("status").notNull(), // 'active', 'matured', 'withdrawn'
-  nextPayoutDate: timestamp("next_payout_date"),
-  maturityDate: timestamp("maturity_date"),
+  agentWalletId: integer("agent_wallet_id").references(() => wallets.id),
+  actionType: varchar("action_type").notNull(), // trade, lend, verify_trust
+  parameters: jsonb("parameters"),
+  result: jsonb("result"),
+  status: varchar("status").notNull(), // pending, success, failed
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const aiAgents = pgTable("ai_agents", {
+// Trust verifications table
+export const trustVerifications = pgTable("trust_verifications", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
-  walletId: integer("wallet_id").notNull().references(() => wallets.id),
-  name: varchar("name").notNull(),
-  type: varchar("type").notNull(), // 'trading', 'payments', 'lending', 'trust'
-  status: varchar("status").notNull(), // 'active', 'paused', 'stopped'
-  configuration: jsonb("configuration"),
-  totalOperations: integer("total_operations").default(0),
-  totalValueManaged: decimal("total_value_managed", { precision: 18, scale: 8 }).default("0"),
-  lastActionAt: timestamp("last_action_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const trustChecks = pgTable("trust_checks", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  checkId: varchar("check_id").notNull().unique(),
-  type: varchar("type").notNull(), // 'pdf_hash', 'multisig', 'qr_verification'
-  status: varchar("status").notNull(), // 'pending', 'verified', 'failed'
-  documentHash: varchar("document_hash"),
+  documentHash: varchar("document_hash").notNull(),
   qrCode: text("qr_code"),
+  verificationType: varchar("verification_type").notNull(), // pdf_sign, hash_verify, trust_qr
   metadata: jsonb("metadata"),
-  verifiedAt: timestamp("verified_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Schema types
-export type UpsertUser = typeof users.$inferInsert;
-export type User = typeof users.$inferSelect;
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  wallets: many(wallets),
+  transactions: many(transactions),
+  massPayments: many(massPayments),
+  invoices: many(invoices),
+  aiAgentActions: many(aiAgentActions),
+  trustVerifications: many(trustVerifications),
+}));
 
-export type InsertWallet = typeof wallets.$inferInsert;
-export type Wallet = typeof wallets.$inferSelect;
+export const walletsRelations = relations(wallets, ({ one, many }) => ({
+  user: one(users, {
+    fields: [wallets.userId],
+    references: [users.id],
+  }),
+  transactions: many(transactions),
+  aiAgentActions: many(aiAgentActions),
+}));
 
-export type InsertTransaction = typeof transactions.$inferInsert;
-export type Transaction = typeof transactions.$inferSelect;
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  user: one(users, {
+    fields: [transactions.userId],
+    references: [users.id],
+  }),
+  wallet: one(wallets, {
+    fields: [transactions.walletId],
+    references: [wallets.id],
+  }),
+}));
 
-export type InsertMassPayment = typeof massPayments.$inferInsert;
-export type MassPayment = typeof massPayments.$inferSelect;
+// Insert schemas
+export const insertUserSchema = createInsertSchema(users).pick({
+  id: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  profileImageUrl: true,
+});
 
-export type InsertInvoice = typeof invoices.$inferInsert;
-export type Invoice = typeof invoices.$inferSelect;
-
-export type InsertLendingPool = typeof lendingPools.$inferInsert;
-export type LendingPool = typeof lendingPools.$inferSelect;
-
-export type InsertAiAgent = typeof aiAgents.$inferInsert;
-export type AiAgent = typeof aiAgents.$inferSelect;
-
-export type InsertTrustCheck = typeof trustChecks.$inferInsert;
-export type TrustCheck = typeof trustChecks.$inferSelect;
-
-// Validation schemas
 export const insertWalletSchema = createInsertSchema(wallets).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
 });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
@@ -185,28 +168,35 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
 export const insertMassPaymentSchema = createInsertSchema(massPayments).omit({
   id: true,
   createdAt: true,
-  completedAt: true,
 });
 
 export const insertInvoiceSchema = createInsertSchema(invoices).omit({
   id: true,
   createdAt: true,
-  paidAt: true,
 });
 
-export const insertLendingPoolSchema = createInsertSchema(lendingPools).omit({
+export const insertAiAgentActionSchema = createInsertSchema(aiAgentActions).omit({
   id: true,
   createdAt: true,
 });
 
-export const insertAiAgentSchema = createInsertSchema(aiAgents).omit({
+export const insertTrustVerificationSchema = createInsertSchema(trustVerifications).omit({
   id: true,
   createdAt: true,
-  lastActionAt: true,
 });
 
-export const insertTrustCheckSchema = createInsertSchema(trustChecks).omit({
-  id: true,
-  createdAt: true,
-  verifiedAt: true,
-});
+// Types
+export type UpsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+export type InsertWallet = z.infer<typeof insertWalletSchema>;
+export type Wallet = typeof wallets.$inferSelect;
+export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
+export type Transaction = typeof transactions.$inferSelect;
+export type InsertMassPayment = z.infer<typeof insertMassPaymentSchema>;
+export type MassPayment = typeof massPayments.$inferSelect;
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+export type Invoice = typeof invoices.$inferSelect;
+export type InsertAiAgentAction = z.infer<typeof insertAiAgentActionSchema>;
+export type AiAgentAction = typeof aiAgentActions.$inferSelect;
+export type InsertTrustVerification = z.infer<typeof insertTrustVerificationSchema>;
+export type TrustVerification = typeof trustVerifications.$inferSelect;

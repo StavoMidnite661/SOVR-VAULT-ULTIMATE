@@ -4,31 +4,28 @@ import {
   transactions,
   massPayments,
   invoices,
-  lendingPools,
-  aiAgents,
-  trustChecks,
+  aiAgentActions,
+  trustVerifications,
   type User,
   type UpsertUser,
-  type Wallet,
   type InsertWallet,
-  type Transaction,
+  type Wallet,
   type InsertTransaction,
-  type MassPayment,
+  type Transaction,
   type InsertMassPayment,
-  type Invoice,
+  type MassPayment,
   type InsertInvoice,
-  type LendingPool,
-  type InsertLendingPool,
-  type AiAgent,
-  type InsertAiAgent,
-  type TrustCheck,
-  type InsertTrustCheck,
+  type Invoice,
+  type InsertAiAgentAction,
+  type AiAgentAction,
+  type InsertTrustVerification,
+  type TrustVerification,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations (mandatory for Replit Auth)
+  // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   
@@ -36,39 +33,36 @@ export interface IStorage {
   createWallet(wallet: InsertWallet): Promise<Wallet>;
   getUserWallets(userId: string): Promise<Wallet[]>;
   getWallet(id: number): Promise<Wallet | undefined>;
-  updateWalletBalance(id: number, balance: string): Promise<void>;
+  updateWallet(id: number, updates: Partial<InsertWallet>): Promise<Wallet>;
   
   // Transaction operations
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   getUserTransactions(userId: string, limit?: number): Promise<Transaction[]>;
-  getWalletTransactions(walletId: number): Promise<Transaction[]>;
+  getTransaction(id: number): Promise<Transaction | undefined>;
+  updateTransactionStatus(id: number, status: string): Promise<Transaction>;
   
   // Mass payment operations
   createMassPayment(massPayment: InsertMassPayment): Promise<MassPayment>;
   getUserMassPayments(userId: string): Promise<MassPayment[]>;
-  updateMassPaymentStatus(id: number, status: string, transactionHashes?: string[]): Promise<void>;
+  getMassPayment(id: number): Promise<MassPayment | undefined>;
+  updateMassPaymentStatus(id: number, status: string): Promise<MassPayment>;
   
   // Invoice operations
   createInvoice(invoice: InsertInvoice): Promise<Invoice>;
   getUserInvoices(userId: string): Promise<Invoice[]>;
-  getInvoiceByNumber(invoiceNumber: string): Promise<Invoice | undefined>;
-  updateInvoiceStatus(id: number, status: string): Promise<void>;
-  
-  // Lending operations
-  createLendingPool(pool: InsertLendingPool): Promise<LendingPool>;
-  getUserLendingPools(userId: string): Promise<LendingPool[]>;
-  updateLendingPoolStatus(id: number, status: string): Promise<void>;
+  getInvoice(invoiceId: string): Promise<Invoice | undefined>;
+  updateInvoiceStatus(invoiceId: string, status: string): Promise<Invoice>;
   
   // AI Agent operations
-  createAiAgent(agent: InsertAiAgent): Promise<AiAgent>;
-  getUserAiAgents(userId: string): Promise<AiAgent[]>;
-  updateAiAgentStats(id: number, operations: number, valueManaged: string): Promise<void>;
+  createAiAgentAction(action: InsertAiAgentAction): Promise<AiAgentAction>;
+  getUserAiAgentActions(userId: string): Promise<AiAgentAction[]>;
+  getAiAgentAction(id: number): Promise<AiAgentAction | undefined>;
+  updateAiAgentActionStatus(id: number, status: string, result?: any): Promise<AiAgentAction>;
   
-  // Trust operations
-  createTrustCheck(check: InsertTrustCheck): Promise<TrustCheck>;
-  getUserTrustChecks(userId: string): Promise<TrustCheck[]>;
-  getTrustCheckById(checkId: string): Promise<TrustCheck | undefined>;
-  updateTrustCheckStatus(id: number, status: string): Promise<void>;
+  // Trust verification operations
+  createTrustVerification(verification: InsertTrustVerification): Promise<TrustVerification>;
+  getUserTrustVerifications(userId: string): Promise<TrustVerification[]>;
+  getTrustVerification(id: number): Promise<TrustVerification | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -103,8 +97,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(wallets)
-      .where(and(eq(wallets.userId, userId), eq(wallets.isActive, true)))
-      .orderBy(desc(wallets.createdAt));
+      .where(and(eq(wallets.userId, userId), eq(wallets.isActive, true)));
   }
 
   async getWallet(id: number): Promise<Wallet | undefined> {
@@ -112,16 +105,21 @@ export class DatabaseStorage implements IStorage {
     return wallet;
   }
 
-  async updateWalletBalance(id: number, balance: string): Promise<void> {
-    await db
+  async updateWallet(id: number, updates: Partial<InsertWallet>): Promise<Wallet> {
+    const [wallet] = await db
       .update(wallets)
-      .set({ balance, updatedAt: new Date() })
-      .where(eq(wallets.id, id));
+      .set(updates)
+      .where(eq(wallets.id, id))
+      .returning();
+    return wallet;
   }
 
   // Transaction operations
   async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
-    const [newTransaction] = await db.insert(transactions).values(transaction).returning();
+    const [newTransaction] = await db
+      .insert(transactions)
+      .values(transaction)
+      .returning();
     return newTransaction;
   }
 
@@ -134,17 +132,29 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
-  async getWalletTransactions(walletId: number): Promise<Transaction[]> {
-    return await db
+  async getTransaction(id: number): Promise<Transaction | undefined> {
+    const [transaction] = await db
       .select()
       .from(transactions)
-      .where(eq(transactions.walletId, walletId))
-      .orderBy(desc(transactions.createdAt));
+      .where(eq(transactions.id, id));
+    return transaction;
+  }
+
+  async updateTransactionStatus(id: number, status: string): Promise<Transaction> {
+    const [transaction] = await db
+      .update(transactions)
+      .set({ status })
+      .where(eq(transactions.id, id))
+      .returning();
+    return transaction;
   }
 
   // Mass payment operations
   async createMassPayment(massPayment: InsertMassPayment): Promise<MassPayment> {
-    const [newMassPayment] = await db.insert(massPayments).values(massPayment).returning();
+    const [newMassPayment] = await db
+      .insert(massPayments)
+      .values(massPayment)
+      .returning();
     return newMassPayment;
   }
 
@@ -156,16 +166,21 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(massPayments.createdAt));
   }
 
-  async updateMassPaymentStatus(id: number, status: string, transactionHashes?: string[]): Promise<void> {
-    const updateData: any = { status };
-    if (transactionHashes) {
-      updateData.transactionHashes = transactionHashes;
-    }
-    if (status === 'completed') {
-      updateData.completedAt = new Date();
-    }
-    
-    await db.update(massPayments).set(updateData).where(eq(massPayments.id, id));
+  async getMassPayment(id: number): Promise<MassPayment | undefined> {
+    const [massPayment] = await db
+      .select()
+      .from(massPayments)
+      .where(eq(massPayments.id, id));
+    return massPayment;
+  }
+
+  async updateMassPaymentStatus(id: number, status: string): Promise<MassPayment> {
+    const [massPayment] = await db
+      .update(massPayments)
+      .set({ status })
+      .where(eq(massPayments.id, id))
+      .returning();
+    return massPayment;
   }
 
   // Invoice operations
@@ -182,89 +197,86 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(invoices.createdAt));
   }
 
-  async getInvoiceByNumber(invoiceNumber: string): Promise<Invoice | undefined> {
-    const [invoice] = await db.select().from(invoices).where(eq(invoices.invoiceNumber, invoiceNumber));
+  async getInvoice(invoiceId: string): Promise<Invoice | undefined> {
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.invoiceId, invoiceId));
     return invoice;
   }
 
-  async updateInvoiceStatus(id: number, status: string): Promise<void> {
-    const updateData: any = { status };
-    if (status === 'paid') {
-      updateData.paidAt = new Date();
-    }
-    
-    await db.update(invoices).set(updateData).where(eq(invoices.id, id));
-  }
-
-  // Lending operations
-  async createLendingPool(pool: InsertLendingPool): Promise<LendingPool> {
-    const [newPool] = await db.insert(lendingPools).values(pool).returning();
-    return newPool;
-  }
-
-  async getUserLendingPools(userId: string): Promise<LendingPool[]> {
-    return await db
-      .select()
-      .from(lendingPools)
-      .where(eq(lendingPools.userId, userId))
-      .orderBy(desc(lendingPools.createdAt));
-  }
-
-  async updateLendingPoolStatus(id: number, status: string): Promise<void> {
-    await db.update(lendingPools).set({ status }).where(eq(lendingPools.id, id));
+  async updateInvoiceStatus(invoiceId: string, status: string): Promise<Invoice> {
+    const [invoice] = await db
+      .update(invoices)
+      .set({ status, paidAt: status === "paid" ? new Date() : undefined })
+      .where(eq(invoices.invoiceId, invoiceId))
+      .returning();
+    return invoice;
   }
 
   // AI Agent operations
-  async createAiAgent(agent: InsertAiAgent): Promise<AiAgent> {
-    const [newAgent] = await db.insert(aiAgents).values(agent).returning();
-    return newAgent;
+  async createAiAgentAction(action: InsertAiAgentAction): Promise<AiAgentAction> {
+    const [newAction] = await db
+      .insert(aiAgentActions)
+      .values(action)
+      .returning();
+    return newAction;
   }
 
-  async getUserAiAgents(userId: string): Promise<AiAgent[]> {
+  async getUserAiAgentActions(userId: string): Promise<AiAgentAction[]> {
     return await db
       .select()
-      .from(aiAgents)
-      .where(eq(aiAgents.userId, userId))
-      .orderBy(desc(aiAgents.createdAt));
+      .from(aiAgentActions)
+      .where(eq(aiAgentActions.userId, userId))
+      .orderBy(desc(aiAgentActions.createdAt));
   }
 
-  async updateAiAgentStats(id: number, operations: number, valueManaged: string): Promise<void> {
-    await db
-      .update(aiAgents)
-      .set({
-        totalOperations: operations,
-        totalValueManaged: valueManaged,
-        lastActionAt: new Date(),
-      })
-      .where(eq(aiAgents.id, id));
+  async getAiAgentAction(id: number): Promise<AiAgentAction | undefined> {
+    const [action] = await db
+      .select()
+      .from(aiAgentActions)
+      .where(eq(aiAgentActions.id, id));
+    return action;
   }
 
-  // Trust operations
-  async createTrustCheck(check: InsertTrustCheck): Promise<TrustCheck> {
-    const [newCheck] = await db.insert(trustChecks).values(check).returning();
-    return newCheck;
+  async updateAiAgentActionStatus(
+    id: number,
+    status: string,
+    result?: any
+  ): Promise<AiAgentAction> {
+    const [action] = await db
+      .update(aiAgentActions)
+      .set({ status, result })
+      .where(eq(aiAgentActions.id, id))
+      .returning();
+    return action;
   }
 
-  async getUserTrustChecks(userId: string): Promise<TrustCheck[]> {
+  // Trust verification operations
+  async createTrustVerification(
+    verification: InsertTrustVerification
+  ): Promise<TrustVerification> {
+    const [newVerification] = await db
+      .insert(trustVerifications)
+      .values(verification)
+      .returning();
+    return newVerification;
+  }
+
+  async getUserTrustVerifications(userId: string): Promise<TrustVerification[]> {
     return await db
       .select()
-      .from(trustChecks)
-      .where(eq(trustChecks.userId, userId))
-      .orderBy(desc(trustChecks.createdAt));
+      .from(trustVerifications)
+      .where(eq(trustVerifications.userId, userId))
+      .orderBy(desc(trustVerifications.createdAt));
   }
 
-  async getTrustCheckById(checkId: string): Promise<TrustCheck | undefined> {
-    const [check] = await db.select().from(trustChecks).where(eq(trustChecks.checkId, checkId));
-    return check;
-  }
-
-  async updateTrustCheckStatus(id: number, status: string): Promise<void> {
-    const updateData: any = { status };
-    if (status === 'verified') {
-      updateData.verifiedAt = new Date();
-    }
-    
-    await db.update(trustChecks).set(updateData).where(eq(trustChecks.id, id));
+  async getTrustVerification(id: number): Promise<TrustVerification | undefined> {
+    const [verification] = await db
+      .select()
+      .from(trustVerifications)
+      .where(eq(trustVerifications.id, id));
+    return verification;
   }
 }
 
