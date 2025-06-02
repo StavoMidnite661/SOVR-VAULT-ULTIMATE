@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { generateQRCode } from "@/lib/qr";
+import { generateQRCode } from "@/lib/qr-utils";
 import { 
   FileText, 
   Plus, 
