@@ -1,23 +1,19 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import path from "path";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
-      "@assets": path.resolve(__dirname, "attached_assets"),
-      "@shared": path.resolve(__dirname, "shared"),
+      '@': path.resolve(__dirname, './src'),
+      '@assets': path.resolve(__dirname, './attached_assets'),
+      '@shared': path.resolve(__dirname, './shared'),
     },
   },
-  root: ".",
   build: {
-    outDir: "dist",
+    outDir: 'dist',
     emptyOutDir: true,
   },
-  server: {
-    port: 5173,
-    host: "0.0.0.0",
-  },
+  // No need for "root" or "input" if you use the default Vite structure
 });
