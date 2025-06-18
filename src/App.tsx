@@ -5,10 +5,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
-import Landing from "@/pages/landing";
+import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/dashboard";
 import Wallets from "@/pages/wallets";
-import AiAgents from "@/pages/ai-agents";
+// import AiAgents from "@/pages/ai-agents";
 import MassPayments from "@/pages/mass-payments";
 import Invoices from "@/pages/invoices";
 import Lending from "@/pages/lending";
@@ -24,7 +24,7 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/wallets" component={Wallets} />
-          <Route path="/ai-agents" component={AiAgents} />
+          {/* <Route path="/ai-agents" component={AiAgents} /> */}
           <Route path="/mass-payments" component={MassPayments} />
           <Route path="/invoices" component={Invoices} />
           <Route path="/lending" component={Lending} />
